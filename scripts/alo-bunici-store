@@ -142,7 +142,7 @@ SITE_SHA=$(git -C "$SITE" rev-parse HEAD)
 # --- 6. wait for the page to serve the new endpoint --------------------------------------
 say "Wait for the page"
 if (( DRY )); then
-  (cd "$SITE" && python3 -m http.server 8792 >/dev/null 2>&1) & CLEANUP_PIDS+=($!)
+  (cd "$SITE" && exec python3 -m http.server 8792 >/dev/null 2>&1) & CLEANUP_PIDS+=($!)
   PAGE=http://localhost:8792/; ORIGIN=http://localhost:8792
 else
   PAGE=$LIVE_URL; ORIGIN=$PAGES_ORIGIN
