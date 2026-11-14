@@ -1,0 +1,11 @@
+name = "alo-bunici-waitlist"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+ALLOWED_ORIGIN = "https://suroshahmadzobair.github.io"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "alo-bunici-waitlist"
+database_id = "REPLACE_AFTER_d1_create"
