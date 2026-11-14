@@ -1,0 +1,178 @@
+#!/usr/bin/env bash
+# alo-bunici-store: puts the Alo Bunici waitlist store live and proves it.
+#
+#   alo-bunici-store            sign in to Cloudflare (browser), then do everything else
+#   alo-bunici-store --dry-run  same steps against a local D1, a local Worker and throwaway
+#                               git remotes; no Cloudflare account, nothing pushed to GitHub
+#
+# Safe to rerun: the D1 database is created once, the schema is IF NOT EXISTS, deploy
+# replaces the Worker, commits happen only when a file changed, and the proof row is
+# deleted at the end. Tokens are never printed: wrangler keeps its own OAuth file.
+# Tracked in SuroshAhmadZobair/voice-agent-demo#27.
+set -euo pipefail
+
+DRY=0; [[ "${1:-}" == "--dry-run" ]] && DRY=1
+WR=(npx -y wrangler@4.162.0)
+GH_OWNER=SuroshAhmadZobair
+SITE_REPO=$GH_OWNER/alo-bunici
+APP_REPO=$GH_OWNER/voice-agent-demo
+APP_BRANCH=claude/landing-a-6b5425
+APP_PAGE=landing/a/index.html
+DB=alo-bunici-waitlist
+PAGES_ORIGIN=https://suroshahmadzobair.github.io
+LIVE_URL=$PAGES_ORIGIN/alo-bunici/
+RUN_ID=$(date +%Y%m%d%H%M%S)-$$
+
+say()  { printf '\n\033[1m== %s\033[0m\n' "$*"; }
+fail() { printf '\n\033[31mFAIL\033[0m: %s\n' "$*"; exit 1; }
+for t in node npx git curl python3 gh; do command -v "$t" >/dev/null || fail "missing tool: $t"; done
+
+if (( DRY )); then
+  BASE=${ALO_BASE:-$(mktemp -d -t alo-bunici-dry)}
+  say "DRY RUN in $BASE (local D1, local Worker, throwaway git remotes)"
+else
+  BASE=$HOME/.cache/alo-bunici
+fi
+mkdir -p "$BASE"
+CLEANUP_PIDS=()
+cleanup() { for p in "${CLEANUP_PIDS[@]:-}"; do [[ -n "$p" ]] && kill "$p" 2>/dev/null || true; done; }
+trap cleanup EXIT
+
+# --- 1. working clones -------------------------------------------------------------------
+# sync <dir> <github repo> <branch>: managed clone, fast-forwarded to origin each run.
+sync() {
+  local dir=$1 repo=$2 br=$3
+  if [[ ! -d $dir/.git ]]; then
+    git clone -q --branch "$br" "https://github.com/$repo.git" "$dir" || return 1
+  else
+    git -C "$dir" fetch -q origin "$br" && git -C "$dir" checkout -q "$br" && git -C "$dir" reset -q --hard "origin/$br"
+  fi
+  if (( DRY )); then   # point origin at a throwaway bare repo so pushes go nowhere real
+    local bare=$dir.remote.git
+    [[ -d $bare ]] || git clone -q --bare "$dir" "$bare"
+    git -C "$dir" remote set-url origin "$bare"
+  fi
+}
+say "Fetching $SITE_REPO and $APP_REPO@$APP_BRANCH"
+SITE=$BASE/alo-bunici; APP=$BASE/voice-agent-demo
+sync "$SITE" "$SITE_REPO" main || fail "cannot clone $SITE_REPO"
+HAVE_APP=1; sync "$APP" "$APP_REPO" "$APP_BRANCH" || { HAVE_APP=0; echo "branch $APP_BRANCH not found, skipping it"; }
+W=$SITE/worker
+cd "$W"
+
+# --- 2. Cloudflare sign-in ---------------------------------------------------------------
+if (( DRY )); then
+  say "Cloudflare sign-in: skipped (dry run)"
+  LOC=--local
+else
+  LOC=--remote
+  if "${WR[@]}" whoami 2>&1 | grep -q "not authenticated"; then
+    say "Cloudflare sign-in: a browser window opens; sign up (free) or sign in, then come back here"
+    "${WR[@]}" login >/dev/null || fail "wrangler login did not finish"
+  fi
+  "${WR[@]}" whoami 2>&1 | grep -q "not authenticated" && fail "still not signed in to Cloudflare"
+  echo "signed in"
+fi
+
+# --- 3. D1 database ----------------------------------------------------------------------
+say "D1 database $DB"
+d1_id() { "${WR[@]}" d1 list --json 2>/dev/null | python3 -c "
+import json,sys
+try: rows=json.load(sys.stdin)
+except Exception: rows=[]
+print(next((r.get('uuid') or r.get('id') for r in rows if r.get('name')=='$DB'), ''))"; }
+if (( DRY )); then
+  ID=00000000-0000-0000-0000-dryrun000000
+else
+  ID=$(d1_id)
+  if [[ -z $ID ]]; then "${WR[@]}" d1 create "$DB" >/dev/null || fail "d1 create failed"; ID=$(d1_id); fi
+  [[ -n $ID ]] || fail "could not read the D1 database id"
+fi
+python3 - "$W/wrangler.toml" "$ID" <<'PY'
+import re,sys
+p,i=sys.argv[1:]; s=open(p).read()
+s=re.sub(r'database_id = "[^"]*"', f'database_id = "{i}"', s)
+if 'workers_dev' not in s: s=s.replace('main = "src/index.js"\n','main = "src/index.js"\nworkers_dev = true\n',1)
+open(p,'w').write(s)
+PY
+echo "database_id set"
+"${WR[@]}" d1 execute "$DB" $LOC --file=schema.sql >/dev/null 2>&1 || fail "schema apply failed"
+echo "schema applied ($LOC)"
+
+# --- 4. deploy the Worker ----------------------------------------------------------------
+say "Deploy Worker"
+if (( DRY )); then
+  "${WR[@]}" deploy --dry-run --outdir "$BASE/dist" >/dev/null 2>&1 || fail "worker does not build"
+  echo "bundle builds (deploy --dry-run)"
+  PORT=8791
+  "${WR[@]}" dev --local --port $PORT >"$BASE/wrangler-dev.log" 2>&1 & CLEANUP_PIDS+=($!)
+  for _ in $(seq 1 60); do curl -s -o /dev/null -X OPTIONS "http://localhost:$PORT/signup" && break; sleep 1; done
+  WORKER=http://localhost:$PORT
+else
+  # Runs on the terminal: on a brand-new account wrangler may ask once for a workers.dev name.
+  OUT=$("${WR[@]}" deploy 2>&1 | tee /dev/stderr) || fail "deploy failed"
+  WORKER=$(grep -Eo 'https://[a-z0-9.-]+\.workers\.dev' <<<"$OUT" | head -1)
+fi
+[[ -n ${WORKER:-} ]] || fail "could not read the Worker URL"
+ENDPOINT=$WORKER/signup
+echo "endpoint: $ENDPOINT"
+
+# --- 5. point the page at the Worker and push --------------------------------------------
+say "Set FORM_ENDPOINT and push"
+set_endpoint() { python3 - "$1" "$ENDPOINT" <<'PY'
+import re,sys
+p,e=sys.argv[1:]; s=open(p,encoding='utf-8').read()
+n,c=re.subn(r"const FORM_ENDPOINT = '[^']*';", f"const FORM_ENDPOINT = '{e}';", s)
+assert c==1, 'FORM_ENDPOINT line not found in '+p
+open(p,'w',encoding='utf-8').write(n)
+PY
+}
+commit_push() { # dir branch files...
+  local dir=$1 br=$2; shift 2
+  git -C "$dir" add "$@"
+  if git -C "$dir" diff --cached --quiet; then echo "$(basename "$dir"): already up to date"; return; fi
+  git -C "$dir" commit -q -m "Waitlist: connect the form to the live store (#27)" && git -C "$dir" push -q origin "$br"
+  echo "$(basename "$dir"): pushed $br $(git -C "$dir" rev-parse --short HEAD)"
+}
+set_endpoint "$SITE/index.html"
+commit_push "$SITE" main index.html worker/wrangler.toml
+if (( HAVE_APP )); then set_endpoint "$APP/$APP_PAGE"; commit_push "$APP" "$APP_BRANCH" "$APP_PAGE"; fi
+SITE_SHA=$(git -C "$SITE" rev-parse HEAD)
+
+# --- 6. wait for the page to serve the new endpoint --------------------------------------
+say "Wait for the page"
+if (( DRY )); then
+  (cd "$SITE" && python3 -m http.server 8792 >/dev/null 2>&1) & CLEANUP_PIDS+=($!)
+  PAGE=http://localhost:8792/; ORIGIN=http://localhost:8792
+else
+  PAGE=$LIVE_URL; ORIGIN=$PAGES_ORIGIN
+fi
+ok=0
+for _ in $(seq 1 60); do   # up to ~5 minutes
+  if curl -fsS "$PAGE?v=$RUN_ID" 2>/dev/null | grep -qF "const FORM_ENDPOINT = '$ENDPOINT';"; then ok=1; break; fi
+  sleep 5
+done
+(( ok )) || fail "$PAGE does not serve the new endpoint yet (site commit ${SITE_SHA:0:7}); rerun in a few minutes"
+echo "$PAGE serves the endpoint"
+
+# --- 7. proof: one test-lead signup, read it back, delete it ------------------------------
+say "Proof: test-lead signup"
+q() { "${WR[@]}" d1 execute "$DB" $LOC --json --command "$1" 2>/dev/null | python3 -c "import json,sys; print(json.dumps(json.load(sys.stdin)[0]['results'], ensure_ascii=False))"; }
+HDR=$(mktemp)
+CODE=$(curl -s -o /dev/null -D "$HDR" -w '%{http_code}' -X POST "$ENDPOINT" \
+  -H "Origin: $ORIGIN" -H 'Content-Type: application/json' \
+  --data "{\"name\":\"test-lead\",\"phone\":\"0700 000 000\",\"email\":\"test-lead@example.com\",\"for\":\"Mama sau tata\",\"city\":\"Cluj\",\"lives\":\"În străinătate\",\"price\":\"39 lei\",\"consent\":true,\"variant\":\"a\",\"page\":\"/alo-bunici/\",\"utm_campaign\":\"test-lead-$RUN_ID\"}")
+ACAO=$(grep -i '^access-control-allow-origin:' "$HDR" | tr -d '\r' | awk '{print $2}'); rm -f "$HDR"
+echo "POST $ENDPOINT -> $CODE (allow-origin: $ACAO)"
+WHERE="name='test-lead' AND utm LIKE '%test-lead-$RUN_ID%'"
+ROWS=$(q "SELECT id, created_at, name, email, city, price, variant, utm FROM signups WHERE $WHERE")
+echo "stored: $ROWS"
+q "DELETE FROM signups WHERE $WHERE" >/dev/null
+LEFT=$(q "SELECT COUNT(*) AS n FROM signups WHERE $WHERE")
+echo "after delete: $LEFT"
+
+if [[ $CODE == 200 && $ACAO == "$ORIGIN" && $ROWS == *test-lead-$RUN_ID* && $LEFT == '[{"n": 0}]' ]]; then
+  printf '\n\033[32mPASS\033[0m%s: %s stores signups at %s\n' "$( (( DRY )) && echo ' (dry run)')" "$PAGE" "$ENDPOINT"
+else
+  fail "proof did not match (code=$CODE origin=$ACAO rows=$ROWS left=$LEFT)"
+fi
