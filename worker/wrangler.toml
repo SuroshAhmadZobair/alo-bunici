@@ -6,7 +6,13 @@ compatibility_date = "2026-10-01"
 [vars]
 ALLOWED_ORIGIN = "https://suroshahmadzobair.github.io"
 
+# Daily retention sweep: rows older than 12 months are deleted (scheduled() in src/index.js).
+[triggers]
+crons = ["17 3 * * *"]
+
+# Created with: wrangler d1 create alo-bunici-waitlist-eu --jurisdiction eu
 [[d1_databases]]
 binding = "DB"
-database_name = "alo-bunici-waitlist"
-database_id = "51590f61-d789-49bf-9112-cdf70fc96445"
+database_name = "alo-bunici-waitlist-eu"
+database_id = "792e3dc6-a906-4fef-aa39-6ca9ba3611a4"
+migrations_dir = "migrations"

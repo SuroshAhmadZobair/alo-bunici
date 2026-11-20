@@ -5,7 +5,7 @@
 #   alo-bunici-store --dry-run  same steps against a local D1, a local Worker and throwaway
 #                               git remotes; no Cloudflare account, nothing pushed to GitHub
 #
-# Safe to rerun: the D1 database is created once, the schema is IF NOT EXISTS, deploy
+# Safe to rerun: the D1 database is created once (EU jurisdiction), migrations apply once, deploy
 # replaces the Worker, commits happen only when a file changed, and the proof row is
 # deleted at the end. Tokens are never printed: wrangler keeps its own OAuth file.
 # Tracked in SuroshAhmadZobair/voice-agent-demo#27.
@@ -18,7 +18,7 @@ SITE_REPO=$GH_OWNER/alo-bunici
 APP_REPO=$GH_OWNER/voice-agent-demo
 APP_BRANCH=claude/landing-a-6b5425
 APP_PAGE=landing/a/index.html
-DB=alo-bunici-waitlist
+DB=alo-bunici-waitlist-eu   # created with --jurisdiction eu: stored and processed in the EU
 PAGES_ORIGIN=https://suroshahmadzobair.github.io
 LIVE_URL=$PAGES_ORIGIN/alo-bunici/
 RUN_ID=$(date +%Y%m%d%H%M%S)-$$
@@ -85,7 +85,7 @@ if (( DRY )); then
   ID=00000000-0000-0000-0000-dryrun000000
 else
   ID=$(d1_id)
-  if [[ -z $ID ]]; then "${WR[@]}" d1 create "$DB" >/dev/null || fail "d1 create failed"; ID=$(d1_id); fi
+  if [[ -z $ID ]]; then "${WR[@]}" d1 create "$DB" --jurisdiction eu >/dev/null || fail "d1 create failed"; ID=$(d1_id); fi
   [[ -n $ID ]] || fail "could not read the D1 database id"
 fi
 python3 - "$W/wrangler.toml" "$ID" <<'PY'
@@ -96,8 +96,8 @@ if 'workers_dev' not in s: s=s.replace('main = "src/index.js"\n','main = "src/in
 open(p,'w').write(s)
 PY
 echo "database_id set"
-"${WR[@]}" d1 execute "$DB" $LOC --file=schema.sql >/dev/null 2>&1 || fail "schema apply failed"
-echo "schema applied ($LOC)"
+"${WR[@]}" d1 migrations apply "$DB" $LOC </dev/null >/dev/null 2>&1 || fail "migrations apply failed"
+echo "migrations applied ($LOC)"
 
 # --- 4. deploy the Worker ----------------------------------------------------------------
 say "Deploy Worker"
@@ -155,24 +155,29 @@ done
 (( ok )) || fail "$PAGE does not serve the new endpoint yet (site commit ${SITE_SHA:0:7}); rerun in a few minutes"
 echo "$PAGE serves the endpoint"
 
-# --- 7. proof: one test-lead signup, read it back, delete it ------------------------------
+# --- 7. proof: one test-lead signup, read it back, delete it through its own delete link --
 say "Proof: test-lead signup"
+CONSENT_TEXT='Sunt de acord să fiu contactat prin telefon, SMS sau email doar ca să aflu când pornește Alo Bunici. Pot retrage acordul oricând. Cum folosim datele'
 q() { "${WR[@]}" d1 execute "$DB" $LOC --json --command "$1" 2>/dev/null | python3 -c "import json,sys; print(json.dumps(json.load(sys.stdin)[0]['results'], ensure_ascii=False))"; }
-HDR=$(mktemp)
-CODE=$(curl -s -o /dev/null -D "$HDR" -w '%{http_code}' -X POST "$ENDPOINT" \
+HDR=$(mktemp); BODY=$(mktemp)
+CODE=$(curl -s -o "$BODY" -D "$HDR" -w '%{http_code}' -X POST "$ENDPOINT" \
   -H "Origin: $ORIGIN" -H 'Content-Type: application/json' \
-  --data "{\"name\":\"test-lead\",\"phone\":\"0700 000 000\",\"email\":\"test-lead@example.com\",\"for\":\"Mama sau tata\",\"city\":\"Cluj\",\"lives\":\"În străinătate\",\"price\":\"39 lei\",\"consent\":true,\"variant\":\"a\",\"page\":\"/alo-bunici/\",\"utm_campaign\":\"test-lead-$RUN_ID\"}")
+  --data "{\"name\":\"test-lead\",\"phone\":\"0700 000 000\",\"email\":\"test-lead@example.com\",\"for\":\"Mama sau tata\",\"city\":\"Cluj\",\"lives\":\"În străinătate\",\"price\":\"39 lei\",\"consent\":true,\"consent_v\":\"v2-2026-11-20\",\"consent_text\":\"$CONSENT_TEXT\",\"privacy_v\":\"v1-2026-11-20\",\"variant\":\"a\",\"page\":\"/alo-bunici/\",\"utm_campaign\":\"test-lead-$RUN_ID\"}")
 ACAO=$(grep -i '^access-control-allow-origin:' "$HDR" | tr -d '\r' | awk '{print $2}'); rm -f "$HDR"
+DEL_URL=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get('delete_url',''))" "$BODY" 2>/dev/null || true); rm -f "$BODY"
 echo "POST $ENDPOINT -> $CODE (allow-origin: $ACAO)"
 WHERE="name='test-lead' AND utm LIKE '%test-lead-$RUN_ID%'"
-ROWS=$(q "SELECT id, created_at, name, email, city, price, variant, utm FROM signups WHERE $WHERE")
+ROWS=$(q "SELECT id, created_at, name, email, city, price, variant, utm, consent_v, consent_match FROM signups WHERE $WHERE")
 echo "stored: $ROWS"
-q "DELETE FROM signups WHERE $WHERE" >/dev/null
+echo "delete link: ${DEL_URL%%\?*}?t=…"
+DEL_CODE=$(curl -s -o /dev/null -w '%{http_code}' -X POST "${DEL_URL%%\?*}" --data-urlencode "t=${DEL_URL##*t=}")
+echo "POST delete -> $DEL_CODE"
 LEFT=$(q "SELECT COUNT(*) AS n FROM signups WHERE $WHERE")
-echo "after delete: $LEFT"
+echo "after delete link: $LEFT"
+q "DELETE FROM signups WHERE $WHERE" >/dev/null   # clean up even if the link failed
 
-if [[ $CODE == 200 && $ACAO == "$ORIGIN" && $ROWS == *test-lead-$RUN_ID* && $LEFT == '[{"n": 0}]' ]]; then
+if [[ $CODE == 200 && $ACAO == "$ORIGIN" && $ROWS == *test-lead-$RUN_ID* && $ROWS == *'"consent_match": 1'* && $DEL_CODE == 200 && $LEFT == '[{"n": 0}]' ]]; then
   printf '\n\033[32mPASS\033[0m%s: %s stores signups at %s\n' "$( (( DRY )) && echo ' (dry run)')" "$PAGE" "$ENDPOINT"
 else
-  fail "proof did not match (code=$CODE origin=$ACAO rows=$ROWS left=$LEFT)"
+  fail "proof did not match (code=$CODE origin=$ACAO rows=$ROWS delete=$DEL_CODE left=$LEFT)"
 fi
