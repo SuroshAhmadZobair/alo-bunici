@@ -157,12 +157,21 @@ echo "$PAGE serves the endpoint"
 
 # --- 7. proof: one test-lead signup, read it back, delete it through its own delete link --
 say "Proof: test-lead signup"
-CONSENT_TEXT='Sunt de acord să fiu contactat prin telefon, SMS sau email doar ca să aflu când pornește Alo Bunici. Pot retrage acordul oricând. Cum folosim datele'
+# The proof sends exactly what the served page shows (consent text, CONSENT_V, PRIVACY_V), so a page/Worker mismatch fails here.
+PAYLOAD=$(curl -fsS "$PAGE?v=$RUN_ID" | python3 -c '
+import html,json,re,sys
+s=sys.stdin.read(); run=sys.argv[1]
+m=re.search(r"<span id=\"consent-text\">(.*?)</span>\s*</label>",s,re.S)
+text=re.sub(r"\s+"," ",html.unescape(re.sub(r"<[^>]+>","",m.group(1)))).strip()
+v=lambda k: re.search(k+r" = \x27([^\x27]+)\x27",s).group(1)
+print(json.dumps({"name":"test-lead","phone":"0700 000 000","email":"test-lead@example.com","for":"Mama sau tata","city":"Cluj",
+ "lives":"În străinătate","price":"39 lei","consent":True,"consent_v":v("CONSENT_V"),"consent_text":text,"privacy_v":v("PRIVACY_V"),
+ "variant":"a","page":"/alo-bunici/","utm_campaign":"test-lead-"+run},ensure_ascii=False))' "$RUN_ID") || fail "could not read the consent text from $PAGE"
 q() { "${WR[@]}" d1 execute "$DB" $LOC --json --command "$1" 2>/dev/null | python3 -c "import json,sys; print(json.dumps(json.load(sys.stdin)[0]['results'], ensure_ascii=False))"; }
 HDR=$(mktemp); BODY=$(mktemp)
 CODE=$(curl -s -o "$BODY" -D "$HDR" -w '%{http_code}' -X POST "$ENDPOINT" \
   -H "Origin: $ORIGIN" -H 'Content-Type: application/json' \
-  --data "{\"name\":\"test-lead\",\"phone\":\"0700 000 000\",\"email\":\"test-lead@example.com\",\"for\":\"Mama sau tata\",\"city\":\"Cluj\",\"lives\":\"În străinătate\",\"price\":\"39 lei\",\"consent\":true,\"consent_v\":\"v2-2026-11-20\",\"consent_text\":\"$CONSENT_TEXT\",\"privacy_v\":\"v1-2026-11-20\",\"variant\":\"a\",\"page\":\"/alo-bunici/\",\"utm_campaign\":\"test-lead-$RUN_ID\"}")
+  --data "$PAYLOAD")
 ACAO=$(grep -i '^access-control-allow-origin:' "$HDR" | tr -d '\r' | awk '{print $2}'); rm -f "$HDR"
 DEL_URL=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get('delete_url',''))" "$BODY" 2>/dev/null || true); rm -f "$BODY"
 echo "POST $ENDPOINT -> $CODE (allow-origin: $ACAO)"
