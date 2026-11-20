@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS signups (
   utm TEXT,                    -- JSON: utm_*, fbclid, ttclid (which ad brought the signup)
   ip_country TEXT,             -- two-letter country from Cloudflare; the IP itself is not stored
   consent_v TEXT NOT NULL,     -- version key of the consent text (CONSENT in src/index.js)
-  consent_hash TEXT NOT NULL,  -- SHA-256 of the consent text the page actually showed
+  consent_hash TEXT NOT NULL,  -- SHA-256 of the consent text the page sent ("none" if it sent none)
   consent_match INTEGER NOT NULL DEFAULT 0,  -- 1 when consent_hash equals the stored text of consent_v
   privacy_v TEXT,              -- version of the privacy notice on the page
   del_hash TEXT NOT NULL UNIQUE  -- SHA-256 of the private delete token; the token itself is never stored

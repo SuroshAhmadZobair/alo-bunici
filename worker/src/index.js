@@ -19,7 +19,7 @@ const CONSENT = {
   'v1-2026-11-16': 'Sunt de acord să fiu contactat prin telefon sau email despre lansare. Confidențialitate',
   'v2-2026-11-20': 'Sunt de acord să fiu contactat prin telefon, SMS sau email doar ca să aflu când pornește Alo Bunici. Pot retrage acordul oricând. Cum folosim datele',
 };
-const LEGACY_V = 'v1-2026-11-16'; // the page live before consent versions were sent
+const LEGACY_V = 'v1-2026-11-16'; // assumed version when a request sends none (the page before 20 Nov 2026)
 
 async function sha256(s) {
   const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
@@ -70,10 +70,11 @@ async function signup(req, env, h) {
   if (d.consent !== true) return json({ error: 'consent' }, 400, h);
 
   // consent record: version, hash of the text the page showed, and whether it matches our copy of that version
+  // A request that sends no text gets consent_match 0: we never record a text nobody showed us.
   const consentV = clip(d.consent_v) || LEGACY_V;
-  const shown = norm(typeof d.consent_text === 'string' ? d.consent_text.slice(0, 1000) : CONSENT[LEGACY_V]);
-  const consentHash = await sha256(shown);
-  const consentMatch = CONSENT[consentV] && consentHash === await sha256(norm(CONSENT[consentV])) ? 1 : 0;
+  const sent = typeof d.consent_text === 'string' && d.consent_text.trim() !== '';
+  const consentHash = sent ? await sha256(norm(d.consent_text.slice(0, 1000))) : 'none';
+  const consentMatch = sent && CONSENT[consentV] && consentHash === await sha256(norm(CONSENT[consentV])) ? 1 : 0;
 
   const utm = {};
   for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'ttclid']) if (d[k]) utm[k] = clip(d[k]);
