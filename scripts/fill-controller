@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# fill-controller: puts the data controller's identity and contact into the privacy notice (#privacy).
+#
+#   scripts/fill-controller "<identity>" "<contact>"
+#   e.g. scripts/fill-controller "Ion Popescu, Str. Exemplu 1, București" "date@exemplu.ro"
+#        scripts/fill-controller "Exemplu SRL, CUI 12345678, Str. Exemplu 1, București" "date@exemplu.ro"
+#
+# An email contact becomes a mailto link. Until this runs the page shows "[în curs de completare]".
+# Commit and push index.html afterwards; GitHub Pages serves main.
+set -euo pipefail
+[[ $# -eq 2 && -n $1 && -n $2 ]] || { sed -n 2,9p "$0"; exit 1; }
+cd "$(dirname "$0")/.."
+python3 -I - index.html "$1" "$2" <<'PY'
+import html,re,sys
+p,who,contact=sys.argv[1:]
+s=open(p,encoding='utf-8').read()
+def put(slot,val):
+    global s
+    pat=rf'<span class="tbd" data-slot="{slot}">\[în curs de completare\]</span><!-- \{{\{{{slot}\}}\}} -->'
+    s,n=re.subn(pat,lambda m:val,s)
+    assert n==1,f'{slot} placeholder not found (already filled?)'
+put('CONTROLLER',html.escape(who))
+c=contact.strip()
+if re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+',c): c=f'<a href="mailto:{html.escape(c)}">{html.escape(c)}</a>'
+else: c=html.escape(c)
+put('CONTACT',c)
+open(p,'w',encoding='utf-8').write(s)
+print('filled: controller and contact')
+PY

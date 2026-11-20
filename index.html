@@ -4,13 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Alo Bunici</title>
-<meta name="description" content="Părinții tăi comandă mâncare doar sunând. Fără aplicație, fără smartphone.">
+<meta name="description" content="În curând: părinții tăi comandă mâncare doar sunând. Fără aplicație, fără smartphone. Intră pe lista de așteptare.">
 <meta name="theme-color" content="#F4ECDD">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..800,0..100,0..1;1,9..144,300..800,0..100,0..1&family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <script>document.documentElement.classList.add('js');if(/[?&]static\b/.test(location.search))document.documentElement.classList.add('static');</script>
 <style>
+/* fonts are served from this site (SIL OFL 1.1, see fonts/): no visitor request goes to Google */
+@font-face { font-family: 'Fraunces'; font-style: italic; font-weight: 300 800; font-display: swap; src: url(fonts/Fraunces-italic-300-800-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Fraunces'; font-style: italic; font-weight: 300 800; font-display: swap; src: url(fonts/Fraunces-italic-300-800-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Fraunces'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/Fraunces-normal-300-800-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Fraunces'; font-style: normal; font-weight: 300 800; font-display: swap; src: url(fonts/Fraunces-normal-300-800-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 500; font-display: swap; src: url(fonts/IBMPlexMono-normal-500-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 500; font-display: swap; src: url(fonts/IBMPlexMono-normal-500-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 600; font-display: swap; src: url(fonts/IBMPlexMono-normal-600-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 600; font-display: swap; src: url(fonts/IBMPlexMono-normal-600-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Literata'; font-style: italic; font-weight: 400 600; font-display: swap; src: url(fonts/Literata-italic-400-600-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Literata'; font-style: italic; font-weight: 400 600; font-display: swap; src: url(fonts/Literata-italic-400-600-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Literata'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(fonts/Literata-normal-400-700-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Literata'; font-style: normal; font-weight: 400 700; font-display: swap; src: url(fonts/Literata-normal-400-700-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 :root{
   --paper:#F4ECDD;
   --paper-2:#EDE2CE;
@@ -249,8 +259,23 @@ form .btn{width:100%;margin-top:4px}
 .card.sent .done .circle-path{animation:draw .9s .15s cubic-bezier(.6,.1,.3,1) forwards}
 
 /* privacy + footer */
+/* coming-soon tag, example caption, delete link, privacy notice */
+.soon{display:inline-flex;align-items:center;gap:8px;margin:0 0 18px;padding:7px 15px;border:1.5px solid var(--terra);border-radius:999px;font-family:var(--mono);font-size:15px;font-weight:600;color:var(--terra)}
+.soon::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--terra)}
+.receipt-cap{margin:12px 0 0;text-align:center;font-family:var(--mono);font-size:14px;font-weight:500;color:var(--ink-2)}
+.done p.del{margin-top:20px;font-family:var(--body);font-size:17px;line-height:1.5;font-weight:400;letter-spacing:0;color:var(--ink-2)}
+.done p.del a{color:var(--terra);font-weight:600;text-underline-offset:3px}
 .privacy{padding-top:56px}
-.privacy p{margin:0;max-width:40em;font-size:17px;line-height:1.6;color:var(--ink-2);border-top:1px solid var(--rule);padding-top:22px}
+.privacy .inner{max-width:44em;border-top:1px solid var(--rule);padding-top:26px}
+.privacy h2{font-size:clamp(30px,6vw,40px);margin:0 0 18px}
+.privacy dl{margin:0;display:grid;gap:14px;font-size:17px;line-height:1.6;color:var(--ink-2)}
+.privacy dt{font-weight:650;color:var(--ink)}
+.privacy dd{margin:2px 0 0}
+.privacy a{color:var(--terra);text-underline-offset:3px;overflow-wrap:anywhere}
+.privacy .ver{margin:18px 0 0;font-size:15px;color:var(--ink-2)}
+.tbd{font-style:italic}
+@media (min-width:720px){.privacy dl > div{display:grid;grid-template-columns:11em 1fr;gap:20px}.privacy dd{margin:0}}
+footer a{color:inherit;text-underline-offset:3px}
 footer{padding:26px 0 40px;font-size:16px;color:var(--ink-2)}
 footer .wrap{display:flex;align-items:center;justify-content:space-between}
 
@@ -361,8 +386,9 @@ html.js .receipt-wrap.in .turn, html.static .receipt .turn{opacity:1;transform:n
 <main>
   <div class="wrap hero">
     <div class="hero-text">
+      <p class="soon reveal">În curând · listă de așteptare</p>
       <h1 class="reveal">Părinții tăi comandă mâncare <em>doar sunând.<svg viewBox="0 0 300 30" preserveAspectRatio="none" aria-hidden="true"><path d="M4 20 C 60 8, 140 26, 200 14 S 280 10, 296 16" fill="none" stroke="#E0A73F" stroke-width="7" stroke-linecap="round"/></svg></em></h1>
-      <p class="sub reveal d1">Orice mâncare, de la aproape orice restaurant din oraș. Fără aplicație, fără smartphone. Sună, spun ce vor, spun „da”, iar mâncarea vine la ușă.</p>
+      <p class="sub reveal d1">Pregătim un număr de telefon pentru mâncare de la restaurantele din oraș. Fără aplicație, fără smartphone. Sună, spun ce vor, spun „da”, iar mâncarea vine la ușă.</p>
       <a class="btn reveal d2" href="#lista">Vreau acces primul <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 V19 M5.5 12.5 L12 19 L18.5 12.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     </div>
 
@@ -433,11 +459,12 @@ html.js .receipt-wrap.in .turn, html.static .receipt .turn{opacity:1;transform:n
         <div class="receipt">
           <ol>
             <li class="turn gran"><span class="who">Bunica</span><p class="said">Alo, aș vrea două porții de sarmale cu mămăligă.</p></li>
-            <li class="turn agent"><span class="who">Alo Bunici</span><p class="said">Două porții de sarmale cu mămăligă, de la Casa Bunicii, 54 de lei cu livrare. Ajung în 40 de minute. Confirmați?</p></li>
+            <li class="turn agent"><span class="who">Alo Bunici</span><p class="said">Două porții de sarmale cu mămăligă, 54 de lei cu livrare. Ajung în 40 de minute. Confirmați?</p></li>
             <li class="turn gran yes"><span class="who">Bunica</span><p class="said">Da.<svg viewBox="0 0 160 90" preserveAspectRatio="none" aria-hidden="true"><path class="circle-path" d="M100 10 C 40 2, 6 22, 10 48 C 14 76, 70 86, 120 78 C 156 70, 158 36, 136 20 C 120 8, 80 6, 62 12" fill="none" stroke="#A9471F" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg></p></li>
             <li class="turn agent"><span class="who">Alo Bunici</span><p class="said">Gata, comanda e plasată. Poftă bună!</p></li>
           </ol>
         </div>
+        <figcaption class="receipt-cap">Exemplu de apel</figcaption>
       </figure>
     </div>
   </div>
@@ -471,7 +498,7 @@ html.js .receipt-wrap.in .turn, html.static .receipt .turn{opacity:1;transform:n
     <div class="many">
       <div class="many-text reveal">
         <h2>Nu doar <em>un restaurant.</em></h2>
-        <p>Pizza, ciorbă, sarmale, sushi sau prăjitura preferată. Aproape orice restaurant din oraș, printr-un singur număr.</p>
+        <p>Pizza, ciorbă, sarmale, sushi sau prăjitura preferată. Restaurantele din oraș, printr-un singur număr.</p>
       </div>
       <ul class="foods reveal d1" aria-hidden="true">
         <li><svg viewBox="0 0 100 100"><g filter="url(#wob2)" stroke="#2B1D14" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 26 Q50 12 82 26 L50 90Z" fill="#E0A73F" transform="translate(4 4)" stroke="none"/><path d="M18 26 Q50 12 82 26 L50 90Z" fill="#F6D58E"/><path d="M16 24 Q50 8 84 24" fill="none" stroke-width="7" stroke="#C4673C"/><circle cx="42" cy="38" r="6" fill="#A9471F"/><circle cx="60" cy="44" r="5" fill="#A9471F"/><circle cx="50" cy="62" r="4.5" fill="#A9471F"/></g></svg></li>
@@ -602,7 +629,7 @@ html.js .receipt-wrap.in .turn, html.static .receipt .turn{opacity:1;transform:n
             <label class="consent" id="consent-l">
               <input type="checkbox" id="consent" name="consent" required aria-describedby="e-consent">
               <span class="box" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M4 10.5 L8.4 15 L16 5.5" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-              <span>Sunt de acord să fiu contactat prin telefon sau email despre lansare. <a href="#privacy">Confidențialitate</a></span>
+              <span id="consent-text">Sunt de acord să fiu contactat prin telefon, SMS sau email doar ca să aflu când pornește Alo Bunici. Pot retrage acordul oricând. <a href="#privacy">Cum folosim datele</a></span>
             </label>
             <span class="err" id="e-consent" style="margin:8px 0 0 46px">Bifează acordul ca să intri pe listă.</span>
           </div>
@@ -612,23 +639,40 @@ html.js .receipt-wrap.in .turn, html.static .receipt .turn{opacity:1;transform:n
         <div class="done" id="done" role="status" aria-live="polite" tabindex="-1">
           <svg viewBox="0 0 120 120" aria-hidden="true"><g filter="url(#wob2)"><circle cx="60" cy="60" r="46" fill="#E9C3A6"/><path class="circle-path" d="M78 16 C 40 6, 10 30, 14 62 C 18 96, 60 110, 92 94 C 116 80, 114 40, 96 24" fill="none" stroke="#A9471F" stroke-width="3.2" stroke-linecap="round"/><path d="M60 82 c -14 -10 -26 -18 -26 -30 c 0 -14 18 -18 26 -6 c 8 -12 26 -8 26 6 c 0 12 -12 20 -26 30Z" fill="#A9471F" stroke="#2B1D14" stroke-width="2.4" stroke-linejoin="round"/></g></svg>
           <p>Mulțumim! Te anunțăm când poți începe.</p>
+          <p class="del" id="del" hidden>Păstrează acest link dacă te răzgândești: <a id="del-a" href="#" rel="noreferrer">Șterge-mi datele</a></p>
         </div>
       </div>
     </div>
   </section>
 
   <section class="wrap privacy" id="privacy">
-    <p>Păstrăm numele, contactul și răspunsurile tale doar ca să te anunțăm la lansare. Nu le dăm nimănui. Scrie-ne și le ștergem.</p>
+    <div class="inner">
+      <h2>Cum folosim datele tale</h2>
+      <dl>
+        <div><dt>Cine le are</dt><dd>Operatorul datelor este <span class="tbd" data-slot="CONTROLLER">[în curs de completare]</span><!-- {{CONTROLLER}} -->. Contact: <span class="tbd" data-slot="CONTACT">[în curs de completare]</span><!-- {{CONTACT}} -->.</dd></div>
+        <div><dt>Ce păstrăm</dt><dd>Numele, telefonul sau emailul, răspunsurile din formular, data acordului, reclama din care ai venit și țara din care te-ai conectat. Nu păstrăm adresa IP.</dd></div>
+        <div><dt>De ce</dt><dd>Ca să te anunțăm când pornește Alo Bunici și ca să vedem câtă lume și-l dorește. Nu le vindem, nu le dăm altcuiva și nu te contactăm pentru altceva.</dd></div>
+        <div><dt>Temeiul legal</dt><dd>Acordul tău (art. 6 alin. (1) lit. a GDPR și art. 12 din Legea 506/2004). Îl poți retrage oricând, fără să afecteze ce s-a făcut înainte.</dd></div>
+        <div><dt>Cât timp</dt><dd>Până la lansare, cel mult 12 luni de la înscriere. După 12 luni se șterg automat.</dd></div>
+        <div><dt>Unde stau</dt><dd>Într-o bază de date Cloudflare D1 restrânsă la Uniunea Europeană. Cloudflare, Inc. (SUA) o administrează pentru noi, ca persoană împuternicită, prin contractul său de prelucrare a datelor. Dacă datele ajung totuși în SUA, transferul se bazează pe certificarea Cloudflare în EU-US Data Privacy Framework și pe clauzele contractuale standard ale UE. Pagina e găzduită de GitHub Pages (GitHub, Inc., SUA), care vede adresa IP a vizitatorilor ca să o afișeze. Nu folosim cookie-uri, pixeli de reclamă sau fonturi externe.</dd></div>
+        <div><dt>Drepturile tale</dt><dd>Poți cere acces la date, corectarea, ștergerea, restricționarea sau portarea lor și te poți opune prelucrării. Scrie-ne la contactul de mai sus; răspundem în cel mult o lună. După înscriere primești un link prin care îți ștergi singur datele, pe loc.</dd></div>
+        <div><dt>Plângere</dt><dd>Poți depune plângere la Autoritatea Națională de Supraveghere a Prelucrării Datelor cu Caracter Personal (ANSPDCP), B-dul G-ral Gheorghe Magheru 28-30, Sector 1, București, <a href="https://www.dataprotection.ro" rel="noopener">dataprotection.ro</a>.</dd></div>
+        <div><dt>E obligatoriu?</dt><dd>Nu. Fără nume și un telefon sau email doar nu te putem anunța. Nu luăm decizii automate despre tine.</dd></div>
+      </dl>
+      <p class="ver">Versiunea 1, 20 noiembrie 2026.</p>
+    </div>
   </section>
 </main>
 
 <footer>
-  <div class="wrap"><span>© 2026 Alo Bunici</span></div>
+  <div class="wrap"><span>© 2026 Alo Bunici</span><a href="#privacy">Date personale</a></div>
 </footer>
 
 <script>
 (function(){
   const FORM_ENDPOINT = 'https://alo-bunici-waitlist.zobairsorosh.workers.dev/signup';
+  const CONSENT_V = 'v2-2026-11-20';  // bump with every change to #consent-text and add it to CONSENT in worker/src/index.js
+  const PRIVACY_V = 'v1-2026-11-20';
   const $ = id => document.getElementById(id);
 
   // scroll reveals
@@ -680,7 +724,9 @@ html.js .receipt-wrap.in .turn, html.static .receipt .turn{opacity:1;transform:n
     ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid','ttclid'].forEach(k => { if (p.get(k)) o[k] = p.get(k); });
     return o;
   }
-  function success(){
+  function success(res){
+    const u = res && res.delete_url;
+    if (typeof u === 'string' && u.indexOf('https://') === 0) { $('del-a').href = u; $('del').hidden = false; }
     card.classList.add('sent');
     const d = document.getElementById('done');
     d.focus({preventScroll:true});
@@ -701,9 +747,11 @@ html.js .receipt-wrap.in .turn, html.static .receipt .turn{opacity:1;transform:n
       lives: (f.querySelector('[name=lives]:checked')||{}).value || '',
       price: (f.querySelector('[name=price]:checked')||{}).value || '',
       consent: true,
+      consent_v: CONSENT_V,
+      consent_text: $('consent-text').textContent.replace(/\s+/g, ' ').trim(),
+      privacy_v: PRIVACY_V,
       variant: 'a',
       page: location.pathname,
-      ts: new Date().toISOString(),
       ...params()
     };
     if (!FORM_ENDPOINT) {
@@ -717,7 +765,7 @@ html.js .receipt-wrap.in .turn, html.static .receipt .turn{opacity:1;transform:n
     try {
       const r = await fetch(FORM_ENDPOINT, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
       if (!r.ok) throw new Error(r.status);
-      success();
+      success(await r.json().catch(() => null));
     } catch (err) {
       document.getElementById('send-err').style.display = 'block';
       btn.disabled = false;
