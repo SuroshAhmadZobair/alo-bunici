@@ -213,7 +213,7 @@ form{display:grid;gap:24px}
 .field{display:grid;gap:8px}
 label.lbl, legend{font-weight:600;font-size:19px;line-height:1.3;color:var(--ink);padding:0}
 .req{color:var(--terra)}
-input[type=text], input[type=email], input[type=tel], select{
+input[type=text], input[type=email], input[type=tel], select, textarea{
   width:100%;min-height:58px;padding:12px 16px;font:inherit;font-size:20px;color:var(--ink);
   background:var(--paper);border:2px solid #CDB89A;border-radius:14px;
   transition:border-color .2s, background .2s, box-shadow .2s;
@@ -223,8 +223,8 @@ select{
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='12' viewBox='0 0 20 12'%3E%3Cpath d='M2 2 L10 10 L18 2' fill='none' stroke='%232B1D14' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 18px center;padding-right:50px;
 }
-input:focus, select:focus{outline:none;border-color:var(--terra);background:#fff;box-shadow:0 0 0 4px rgba(169,71,31,.15)}
-.field.bad input, .field.bad select{border-color:var(--err);background:#FFF3EE}
+input:focus, select:focus, textarea:focus{outline:none;border-color:var(--terra);background:#fff;box-shadow:0 0 0 4px rgba(169,71,31,.15)}
+.field.bad input, .field.bad select, .field.bad textarea{border-color:var(--err);background:#FFF3EE}
 .err{display:none;color:var(--err);font-size:17px;font-weight:600;line-height:1.35}
 .field.bad .err, .consent.bad + .err{display:block}
 fieldset{border:0;margin:0;padding:0;min-width:0}
@@ -273,7 +273,14 @@ form .btn{width:100%;margin-top:4px}
 .privacy dd{margin:2px 0 0}
 .privacy a{color:var(--terra);text-underline-offset:3px;overflow-wrap:anywhere}
 .privacy .ver{margin:18px 0 0;font-size:15px;color:var(--ink-2)}
-.tbd{font-style:italic}
+[hidden]{display:none!important}
+.write{margin-top:34px;max-width:34em}
+.write h3{font-family:var(--display);font-weight:500;font-size:28px;line-height:1.15;margin:0 0 18px;font-variation-settings:"SOFT" 60,"WONK" 0}
+.write textarea{min-height:130px;resize:vertical;line-height:1.5}
+.write .btn{width:auto;justify-self:start}
+.write .mdone p{margin:0;font-size:18px;color:var(--ink)}
+.write .mdone p.del{margin-top:10px;font-size:17px;color:var(--ink-2)}
+.write .mdone a{color:var(--terra);font-weight:600}
 @media (min-width:720px){.privacy dl > div{display:grid;grid-template-columns:11em 1fr;gap:20px}.privacy dd{margin:0}}
 footer a{color:inherit;text-underline-offset:3px}
 footer{padding:26px 0 40px;font-size:16px;color:var(--ink-2)}
@@ -576,7 +583,7 @@ html.js .receipt-wrap.in .turn, html.static .receipt .turn{opacity:1;transform:n
         <h2>Lansăm în curând. <span class="l2">Te anunțăm primul.</span></h2>
       </div>
       <div class="card reveal d1" id="card">
-        <form id="f" novalidate>
+        <form id="f" method="post" novalidate>
           <div class="field" data-f="name">
             <label class="lbl" for="name">Numele tău <span class="req" aria-hidden="true">*</span></label>
             <input id="name" name="name" type="text" autocomplete="name" required aria-describedby="e-name">
@@ -649,17 +656,46 @@ html.js .receipt-wrap.in .turn, html.static .receipt .turn{opacity:1;transform:n
     <div class="inner">
       <h2>Cum folosim datele tale</h2>
       <dl>
-        <div><dt>Cine le are</dt><dd>Operatorul datelor este <span class="tbd" data-slot="CONTROLLER">[în curs de completare]</span><!-- {{CONTROLLER}} -->. Contact: <span class="tbd" data-slot="CONTACT">[în curs de completare]</span><!-- {{CONTACT}} -->.</dd></div>
-        <div><dt>Ce păstrăm</dt><dd>Numele, telefonul sau emailul, răspunsurile din formular, data acordului, reclama din care ai venit și țara din care te-ai conectat. Nu păstrăm adresa IP.</dd></div>
-        <div><dt>De ce</dt><dd>Ca să te anunțăm când pornește Alo Bunici și ca să vedem câtă lume și-l dorește. Nu le vindem, nu le dăm altcuiva și nu te contactăm pentru altceva.</dd></div>
+        <div><dt>Cine le are</dt><dd>Operatorul datelor este Ahmad Zobair Surosh, Brașov, România. Contact: <a href="#scrie">formularul „Scrie-ne” de mai jos</a>.</dd></div>
+        <div><dt>Ce păstrăm</dt><dd>Numele, telefonul sau emailul, răspunsurile din formular, data acordului, reclama din care ai venit și țara din care te-ai conectat. Dacă ne scrii, păstrăm mesajul și contactul la care să-ți răspundem. Nu păstrăm adresa IP.</dd></div>
+        <div><dt>De ce</dt><dd>Ca să te anunțăm când pornește Alo Bunici, ca să vedem câtă lume și-l dorește și ca să-ți răspundem dacă ne scrii. Nu le vindem, nu le dăm altcuiva și nu te contactăm pentru altceva.</dd></div>
         <div><dt>Temeiul legal</dt><dd>Acordul tău (art. 6 alin. (1) lit. a GDPR și art. 12 din Legea 506/2004). Îl poți retrage oricând, fără să afecteze ce s-a făcut înainte.</dd></div>
-        <div><dt>Cât timp</dt><dd>Până la lansare, cel mult 12 luni de la înscriere. După 12 luni se șterg automat.</dd></div>
-        <div><dt>Unde stau</dt><dd>Într-o bază de date Cloudflare D1 restrânsă la Uniunea Europeană. Cloudflare, Inc. (SUA) o administrează pentru noi, ca persoană împuternicită, prin contractul său de prelucrare a datelor. Dacă datele ajung totuși în SUA, transferul se bazează pe certificarea Cloudflare în EU-US Data Privacy Framework și pe clauzele contractuale standard ale UE. Pagina e găzduită de GitHub Pages (GitHub, Inc., SUA), care vede adresa IP a vizitatorilor ca să o afișeze. Nu folosim cookie-uri, pixeli de reclamă sau fonturi externe.</dd></div>
-        <div><dt>Drepturile tale</dt><dd>Poți cere acces la date, corectarea, ștergerea, restricționarea sau portarea lor și te poți opune prelucrării. Scrie-ne la contactul de mai sus; răspundem în cel mult o lună. După înscriere primești un link prin care îți ștergi singur datele, pe loc.</dd></div>
+        <div><dt>Cât timp</dt><dd>Înscrierile, până la lansare și cel mult 12 luni. Mesajele, cel mult 12 luni. După 12 luni se șterg automat.</dd></div>
+        <div><dt>Unde stau</dt><dd>Într-o bază de date Cloudflare D1 restrânsă la Uniunea Europeană. Cloudflare, Inc. (SUA) o administrează pentru noi, ca persoană împuternicită, prin contractul său de prelucrare a datelor. Dacă datele ajung totuși în SUA, transferul se bazează pe certificarea Cloudflare în EU-US Data Privacy Framework și pe clauzele contractuale standard ale UE. Pagina e găzduită de GitHub Pages (GitHub, Inc., SUA), care vede adresa IP a vizitatorilor ca să o afișeze. Nu folosim cookie-uri, pixeli de reclamă sau fonturi externe. Adresa IP o folosim doar pe moment, ca să limităm abuzurile pe formulare (interes legitim, art. 6 alin. (1) lit. f GDPR), și nu o păstrăm.</dd></div>
+        <div><dt>Drepturile tale</dt><dd>Poți cere acces la date, corectarea, ștergerea, restricționarea sau portarea lor și te poți opune prelucrării. Scrie-ne prin formularul de mai jos; răspundem în cel mult o lună. După înscriere sau după un mesaj primești un link prin care îți ștergi singur datele, pe loc.</dd></div>
         <div><dt>Plângere</dt><dd>Poți depune plângere la Autoritatea Națională de Supraveghere a Prelucrării Datelor cu Caracter Personal (ANSPDCP), B-dul G-ral Gheorghe Magheru 28-30, Sector 1, București, <a href="https://www.dataprotection.ro" rel="noopener">dataprotection.ro</a>.</dd></div>
         <div><dt>E obligatoriu?</dt><dd>Nu. Fără nume și un telefon sau email doar nu te putem anunța. Nu luăm decizii automate despre tine.</dd></div>
       </dl>
-      <p class="ver">Versiunea 1, 20 noiembrie 2026.</p>
+      <div class="write" id="scrie">
+        <h3>Scrie-ne</h3>
+        <form id="mf" method="post" novalidate>
+          <div class="field" data-f="msg">
+            <label class="lbl" for="msg">Mesajul tău</label>
+            <textarea id="msg" name="message" rows="4" maxlength="2000" required aria-describedby="e-msg"></textarea>
+            <span class="err" id="e-msg">Scrie un mesaj.</span>
+          </div>
+          <div class="field" data-f="reply">
+            <label class="lbl" for="reply">Email sau telefon pentru răspuns</label>
+            <input id="reply" name="reply" type="text" autocomplete="email" maxlength="200" required aria-describedby="e-reply">
+            <span class="err" id="e-reply">Scrie un email sau un telefon valid.</span>
+          </div>
+          <div>
+            <label class="consent" id="mconsent-l">
+              <input type="checkbox" id="mconsent" name="consent" required aria-describedby="e-mconsent">
+              <span class="box" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M4 10.5 L8.4 15 L16 5.5" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span id="mconsent-text">Sunt de acord să folosiți acest contact doar ca să-mi răspundeți.</span>
+            </label>
+            <span class="err" id="e-mconsent" style="margin:8px 0 0 46px">Bifează acordul ca să-ți putem răspunde.</span>
+          </div>
+          <button class="btn" type="submit" id="mgo">Trimite</button>
+          <p class="send-err" id="msend-err" role="alert">Nu a mers. Încearcă din nou.</p>
+        </form>
+        <div class="mdone" id="mdone" hidden role="status" tabindex="-1">
+          <p>Am primit mesajul. Îți răspundem în cel mult o lună.</p>
+          <p class="del" id="mdel" hidden>Te-ai răzgândit? <a id="mdel-a" href="#" rel="noreferrer">Șterge mesajul</a></p>
+        </div>
+      </div>
+      <p class="ver">Versiunea 2, 20 noiembrie 2026.</p>
     </div>
   </section>
 </main>
@@ -672,7 +708,8 @@ html.js .receipt-wrap.in .turn, html.static .receipt .turn{opacity:1;transform:n
 (function(){
   const FORM_ENDPOINT = 'https://alo-bunici-waitlist.zobairsorosh.workers.dev/signup';
   const CONSENT_V = 'v2-2026-11-20';  // bump with every change to #consent-text and add it to CONSENT in worker/src/index.js
-  const PRIVACY_V = 'v1-2026-11-20';
+  const PRIVACY_V = 'v2-2026-11-20';
+  const MCONSENT_V = 'm1-2026-11-20';  // "Scrie-ne" consent; same rule as CONSENT_V
   const $ = id => document.getElementById(id);
 
   // scroll reveals
@@ -692,7 +729,7 @@ html.js .receipt-wrap.in .turn, html.static .receipt .turn{opacity:1;transform:n
   const card = document.getElementById('card');
   const consentL = document.getElementById('consent-l');
   const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-  const phoneOk = v => /^[+()\d\s.\-]+$/.test(v) && v.replace(/\D/g,'').length >= 9;
+  const phoneOk = v => /^[+()\d\s.\-]+$/.test(v) && v.replace(/\D/g,'').length >= 9 && v.replace(/\D/g,'').length <= 15;
 
   function setBad(name, bad){
     const wrap = f.querySelector('[data-f="'+name+'"]');
@@ -768,6 +805,55 @@ html.js .receipt-wrap.in .turn, html.static .receipt .turn{opacity:1;transform:n
       success(await r.json().catch(() => null));
     } catch (err) {
       document.getElementById('send-err').style.display = 'block';
+      btn.disabled = false;
+    }
+  });
+
+  // "Scrie-ne" form in #privacy
+  const mf = $('mf');
+  let mtried = false;
+  function mcheck(){
+    const msg = $('msg').value.trim(), reply = $('reply').value.trim();
+    const badMsg = msg.length < 5;
+    const badReply = !(emailRe.test(reply) || phoneOk(reply));
+    const badConsent = !$('mconsent').checked;
+    mf.querySelector('[data-f="msg"]').classList.toggle('bad', badMsg);
+    mf.querySelector('[data-f="reply"]').classList.toggle('bad', badReply);
+    $('msg').setAttribute('aria-invalid', badMsg ? 'true' : 'false');
+    $('reply').setAttribute('aria-invalid', badReply ? 'true' : 'false');
+    $('mconsent-l').classList.toggle('bad', badConsent);
+    $('mconsent').setAttribute('aria-invalid', badConsent ? 'true' : 'false');
+    return badMsg ? $('msg') : badReply ? $('reply') : badConsent ? $('mconsent') : null;
+  }
+  mf.addEventListener('input', () => { if (mtried) mcheck(); });
+  mf.addEventListener('change', () => { if (mtried) mcheck(); });
+  mf.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    mtried = true;
+    const first = mcheck();
+    if (first) { first.focus(); return; }
+    const btn = $('mgo');
+    btn.disabled = true;
+    $('msend-err').style.display = 'none';
+    try {
+      const r = await fetch(FORM_ENDPOINT.replace(/\/signup$/, '/message'), { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+        message: $('msg').value.trim(),
+        reply: $('reply').value.trim(),
+        consent: true,
+        consent_v: MCONSENT_V,
+        consent_text: $('mconsent-text').textContent.replace(/\s+/g, ' ').trim(),
+        privacy_v: PRIVACY_V,
+        page: location.pathname
+      })});
+      if (!r.ok) throw new Error(r.status);
+      const res = await r.json().catch(() => null);
+      const u = res && res.delete_url;
+      if (typeof u === 'string' && u.indexOf('https://') === 0) { $('mdel-a').href = u; $('mdel').hidden = false; }
+      mf.hidden = true;
+      $('mdone').hidden = false;
+      $('mdone').focus({preventScroll:true});
+    } catch (err) {
+      $('msend-err').style.display = 'block';
       btn.disabled = false;
     }
   });
