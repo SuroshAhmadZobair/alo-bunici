@@ -583,7 +583,7 @@ html.js .receipt-wrap.in .turn, html.static .receipt .turn{opacity:1;transform:n
         <h2>Lansăm în curând. <span class="l2">Te anunțăm primul.</span></h2>
       </div>
       <div class="card reveal d1" id="card">
-        <form id="f" novalidate>
+        <form id="f" method="post" novalidate>
           <div class="field" data-f="name">
             <label class="lbl" for="name">Numele tău <span class="req" aria-hidden="true">*</span></label>
             <input id="name" name="name" type="text" autocomplete="name" required aria-describedby="e-name">
@@ -661,14 +661,14 @@ html.js .receipt-wrap.in .turn, html.static .receipt .turn{opacity:1;transform:n
         <div><dt>De ce</dt><dd>Ca să te anunțăm când pornește Alo Bunici, ca să vedem câtă lume și-l dorește și ca să-ți răspundem dacă ne scrii. Nu le vindem, nu le dăm altcuiva și nu te contactăm pentru altceva.</dd></div>
         <div><dt>Temeiul legal</dt><dd>Acordul tău (art. 6 alin. (1) lit. a GDPR și art. 12 din Legea 506/2004). Îl poți retrage oricând, fără să afecteze ce s-a făcut înainte.</dd></div>
         <div><dt>Cât timp</dt><dd>Înscrierile, până la lansare și cel mult 12 luni. Mesajele, cel mult 12 luni. După 12 luni se șterg automat.</dd></div>
-        <div><dt>Unde stau</dt><dd>Într-o bază de date Cloudflare D1 restrânsă la Uniunea Europeană. Cloudflare, Inc. (SUA) o administrează pentru noi, ca persoană împuternicită, prin contractul său de prelucrare a datelor. Dacă datele ajung totuși în SUA, transferul se bazează pe certificarea Cloudflare în EU-US Data Privacy Framework și pe clauzele contractuale standard ale UE. Pagina e găzduită de GitHub Pages (GitHub, Inc., SUA), care vede adresa IP a vizitatorilor ca să o afișeze. Nu folosim cookie-uri, pixeli de reclamă sau fonturi externe.</dd></div>
+        <div><dt>Unde stau</dt><dd>Într-o bază de date Cloudflare D1 restrânsă la Uniunea Europeană. Cloudflare, Inc. (SUA) o administrează pentru noi, ca persoană împuternicită, prin contractul său de prelucrare a datelor. Dacă datele ajung totuși în SUA, transferul se bazează pe certificarea Cloudflare în EU-US Data Privacy Framework și pe clauzele contractuale standard ale UE. Pagina e găzduită de GitHub Pages (GitHub, Inc., SUA), care vede adresa IP a vizitatorilor ca să o afișeze. Nu folosim cookie-uri, pixeli de reclamă sau fonturi externe. Adresa IP o folosim doar pe moment, ca să limităm abuzurile pe formulare (interes legitim, art. 6 alin. (1) lit. f GDPR), și nu o păstrăm.</dd></div>
         <div><dt>Drepturile tale</dt><dd>Poți cere acces la date, corectarea, ștergerea, restricționarea sau portarea lor și te poți opune prelucrării. Scrie-ne prin formularul de mai jos; răspundem în cel mult o lună. După înscriere sau după un mesaj primești un link prin care îți ștergi singur datele, pe loc.</dd></div>
         <div><dt>Plângere</dt><dd>Poți depune plângere la Autoritatea Națională de Supraveghere a Prelucrării Datelor cu Caracter Personal (ANSPDCP), B-dul G-ral Gheorghe Magheru 28-30, Sector 1, București, <a href="https://www.dataprotection.ro" rel="noopener">dataprotection.ro</a>.</dd></div>
         <div><dt>E obligatoriu?</dt><dd>Nu. Fără nume și un telefon sau email doar nu te putem anunța. Nu luăm decizii automate despre tine.</dd></div>
       </dl>
       <div class="write" id="scrie">
         <h3>Scrie-ne</h3>
-        <form id="mf" novalidate>
+        <form id="mf" method="post" novalidate>
           <div class="field" data-f="msg">
             <label class="lbl" for="msg">Mesajul tău</label>
             <textarea id="msg" name="message" rows="4" maxlength="2000" required aria-describedby="e-msg"></textarea>
@@ -676,7 +676,7 @@ html.js .receipt-wrap.in .turn, html.static .receipt .turn{opacity:1;transform:n
           </div>
           <div class="field" data-f="reply">
             <label class="lbl" for="reply">Email sau telefon pentru răspuns</label>
-            <input id="reply" name="reply" type="text" autocomplete="email" required aria-describedby="e-reply">
+            <input id="reply" name="reply" type="text" autocomplete="email" maxlength="200" required aria-describedby="e-reply">
             <span class="err" id="e-reply">Scrie un email sau un telefon valid.</span>
           </div>
           <div>
@@ -729,7 +729,7 @@ html.js .receipt-wrap.in .turn, html.static .receipt .turn{opacity:1;transform:n
   const card = document.getElementById('card');
   const consentL = document.getElementById('consent-l');
   const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-  const phoneOk = v => /^[+()\d\s.\-]+$/.test(v) && v.replace(/\D/g,'').length >= 9;
+  const phoneOk = v => /^[+()\d\s.\-]+$/.test(v) && v.replace(/\D/g,'').length >= 9 && v.replace(/\D/g,'').length <= 15;
 
   function setBad(name, bad){
     const wrap = f.querySelector('[data-f="'+name+'"]');

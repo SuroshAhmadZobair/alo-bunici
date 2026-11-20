@@ -32,11 +32,12 @@ async function sha256(s) {
 
 // consent record: version, hash of the text the page sent, and whether it matches our copy of that version.
 // A request that sends no text gets hash 'none' and match 0: we never record a text nobody showed us.
-async function consentRecord(d, fallbackV) {
+// `kind` keeps the forms apart: message consent versions start with "m", signup versions with "v".
+async function consentRecord(d, fallbackV, kind) {
   const v = clip(d.consent_v) || fallbackV;
   const sent = typeof d.consent_text === 'string' && d.consent_text.trim() !== '';
   const hash = sent ? await sha256(norm(d.consent_text.slice(0, 1000))) : 'none';
-  const match = sent && CONSENT[v] && hash === await sha256(norm(CONSENT[v])) ? 1 : 0;
+  const match = sent && v.startsWith(kind) && CONSENT[v] && hash === await sha256(norm(CONSENT[v])) ? 1 : 0;
   return { v, hash, match };
 }
 
@@ -96,7 +97,7 @@ async function signup(req, env, h) {
   if (!phone && !email) return json({ error: 'contact' }, 400, h);
   if (d.consent !== true) return json({ error: 'consent' }, 400, h);
 
-  const c = await consentRecord(d, LEGACY_V);
+  const c = await consentRecord(d, LEGACY_V, 'v');
 
   const utm = {};
   for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'ttclid']) if (d[k]) utm[k] = clip(d[k]);
@@ -124,7 +125,7 @@ async function message(req, env, h) {
   if (!emailRe.test(reply) && !phoneOk(reply)) return json({ error: 'reply' }, 400, h);
   if (d.consent !== true) return json({ error: 'consent' }, 400, h);
 
-  const c = await consentRecord(d, '');
+  const c = await consentRecord(d, '', 'm');
   const token = crypto.randomUUID();
   await env.DB.prepare(
     `INSERT INTO messages (body, reply, page, ip_country, consent_v, consent_hash, consent_match, privacy_v, del_hash)
@@ -170,6 +171,8 @@ export default {
     const h = cors(env, req.headers.get('Origin'));
     const url = new URL(req.url);
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: h });
+    const isJson = (req.headers.get('Content-Type') || '').toLowerCase().startsWith('application/json');
+    if (req.method === 'POST' && (url.pathname === '/signup' || url.pathname === '/message') && !isJson) return json({ error: 'json only' }, 415, h);
     if (req.method === 'POST' && url.pathname === '/signup') return signup(req, env, h);
     if (req.method === 'POST' && url.pathname === '/message') return message(req, env, h);
     if (req.method === 'GET' && url.pathname === '/delete') return deleteConfirm(url);
