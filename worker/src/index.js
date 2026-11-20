@@ -37,7 +37,7 @@ async function consentRecord(d, fallbackV, kind) {
   const v = clip(d.consent_v) || fallbackV;
   const sent = typeof d.consent_text === 'string' && d.consent_text.trim() !== '';
   const hash = sent ? await sha256(norm(d.consent_text.slice(0, 1000))) : 'none';
-  const match = sent && v.startsWith(kind) && CONSENT[v] && hash === await sha256(norm(CONSENT[v])) ? 1 : 0;
+  const match = sent && v.startsWith(kind) && Object.hasOwn(CONSENT, v) && hash === await sha256(norm(CONSENT[v])) ? 1 : 0;
   return { v, hash, match };
 }
 
