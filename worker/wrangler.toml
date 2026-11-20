@@ -16,3 +16,14 @@ binding = "DB"
 database_name = "alo-bunici-waitlist-eu"
 database_id = "792e3dc6-a906-4fef-aa39-6ca9ba3611a4"
 migrations_dir = "migrations"
+
+# Per-IP rate limits (period must be 10 or 60 seconds). The IP is only the counter key; it is never stored.
+[[ratelimits]]
+name = "RL_SIGNUP"
+namespace_id = "1001"
+simple = { limit = 5, period = 60 }
+
+[[ratelimits]]
+name = "RL_MESSAGE"
+namespace_id = "1002"
+simple = { limit = 3, period = 60 }

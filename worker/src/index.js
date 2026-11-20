@@ -1,8 +1,10 @@
 // Waitlist store for the Alo Bunici landing page.
 //   POST /signup          store one row with a consent record, return a private delete link
+//   POST /message         store one "Scrie-ne" message (reply contact + consent record), return a private delete link
 //   GET  /delete?t=TOKEN  confirm page (a GET never deletes, so link scanners can't wipe rows)
 //   POST /delete          delete the row that belongs to TOKEN
-//   cron (daily)          delete rows older than 12 months
+//   cron (daily)          delete signups and messages older than 12 months
+// Both POSTs are rate limited per client IP (the IP is used as the limiter key only, never stored).
 // Tracked in SuroshAhmadZobair/voice-agent-demo (legal pass for landing + ads).
 
 const MAX = 200;
@@ -18,12 +20,36 @@ const norm = s => String(s || '').replace(/\s+/g, ' ').trim();
 const CONSENT = {
   'v1-2026-11-16': 'Sunt de acord să fiu contactat prin telefon sau email despre lansare. Confidențialitate',
   'v2-2026-11-20': 'Sunt de acord să fiu contactat prin telefon, SMS sau email doar ca să aflu când pornește Alo Bunici. Pot retrage acordul oricând. Cum folosim datele',
+  // "Scrie-ne" form
+  'm1-2026-11-20': 'Sunt de acord să folosiți acest contact doar ca să-mi răspundeți.',
 };
 const LEGACY_V = 'v1-2026-11-16'; // assumed version when a request sends none (the page before 20 Nov 2026)
 
 async function sha256(s) {
   const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
   return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
+// consent record: version, hash of the text the page sent, and whether it matches our copy of that version.
+// A request that sends no text gets hash 'none' and match 0: we never record a text nobody showed us.
+async function consentRecord(d, fallbackV) {
+  const v = clip(d.consent_v) || fallbackV;
+  const sent = typeof d.consent_text === 'string' && d.consent_text.trim() !== '';
+  const hash = sent ? await sha256(norm(d.consent_text.slice(0, 1000))) : 'none';
+  const match = sent && CONSENT[v] && hash === await sha256(norm(CONSENT[v])) ? 1 : 0;
+  return { v, hash, match };
+}
+
+// Per-IP rate limit (Workers rate limiting binding). The IP is only the counter key.
+async function limited(limiter, req) {
+  if (!limiter) return false;
+  const key = req.headers.get('CF-Connecting-IP') || 'none';
+  try { return !(await limiter.limit({ key })).success; } catch { return false; }
+}
+
+function deleteUrl(req, token, kind) {
+  const u = new URL('/delete', req.url); u.searchParams.set('t', token); if (kind) u.searchParams.set('k', kind);
+  return u.toString();
 }
 
 function cors(env, origin) {
@@ -58,6 +84,7 @@ a{color:var(--terra)}
 const BACK = '<p><a href="https://suroshahmadzobair.github.io/alo-bunici/">Înapoi la Alo Bunici</a></p>';
 
 async function signup(req, env, h) {
+  if (await limited(env.RL_SIGNUP, req)) return json({ error: 'slow down' }, 429, h);
   let d;
   try { d = await req.json(); } catch { return json({ error: 'bad json' }, 400, h); }
   if (d.website) return json({ ok: true }, 200, h); // honeypot
@@ -69,12 +96,7 @@ async function signup(req, env, h) {
   if (!phone && !email) return json({ error: 'contact' }, 400, h);
   if (d.consent !== true) return json({ error: 'consent' }, 400, h);
 
-  // consent record: version, hash of the text the page showed, and whether it matches our copy of that version
-  // A request that sends no text gets consent_match 0: we never record a text nobody showed us.
-  const consentV = clip(d.consent_v) || LEGACY_V;
-  const sent = typeof d.consent_text === 'string' && d.consent_text.trim() !== '';
-  const consentHash = sent ? await sha256(norm(d.consent_text.slice(0, 1000))) : 'none';
-  const consentMatch = sent && CONSENT[consentV] && consentHash === await sha256(norm(CONSENT[consentV])) ? 1 : 0;
+  const c = await consentRecord(d, LEGACY_V);
 
   const utm = {};
   for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'ttclid']) if (d[k]) utm[k] = clip(d[k]);
@@ -84,18 +106,43 @@ async function signup(req, env, h) {
     `INSERT INTO signups (name, phone, email, for_whom, city, lives, price, variant, page, utm, ip_country,
        consent_v, consent_hash, consent_match, privacy_v, del_hash) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
   ).bind(name, phone, email, clip(d.for), clip(d.city), clip(d.lives), clip(d.price), clip(d.variant), clip(d.page),
-    JSON.stringify(utm), (req.cf && req.cf.country) || '', consentV, consentHash, consentMatch, clip(d.privacy_v),
+    JSON.stringify(utm), (req.cf && req.cf.country) || '', c.v, c.hash, c.match, clip(d.privacy_v),
     await sha256(token)).run();
 
-  const del = new URL('/delete', req.url); del.searchParams.set('t', token);
-  return json({ ok: true, delete_url: del.toString() }, 200, h);
+  return json({ ok: true, delete_url: deleteUrl(req, token) }, 200, h);
+}
+
+async function message(req, env, h) {
+  if (await limited(env.RL_MESSAGE, req)) return json({ error: 'slow down' }, 429, h);
+  let d;
+  try { d = await req.json(); } catch { return json({ error: 'bad json' }, 400, h); }
+  if (d.website) return json({ ok: true }, 200, h); // honeypot
+
+  const body = typeof d.message === 'string' ? d.message.trim().slice(0, 2000) : '';
+  const reply = clip(d.reply);
+  if (body.length < 5) return json({ error: 'message' }, 400, h);
+  if (!emailRe.test(reply) && !phoneOk(reply)) return json({ error: 'reply' }, 400, h);
+  if (d.consent !== true) return json({ error: 'consent' }, 400, h);
+
+  const c = await consentRecord(d, '');
+  const token = crypto.randomUUID();
+  await env.DB.prepare(
+    `INSERT INTO messages (body, reply, page, ip_country, consent_v, consent_hash, consent_match, privacy_v, del_hash)
+     VALUES (?,?,?,?,?,?,?,?,?)`
+  ).bind(body, reply, clip(d.page), (req.cf && req.cf.country) || '', c.v, c.hash, c.match, clip(d.privacy_v),
+    await sha256(token)).run();
+
+  return json({ ok: true, delete_url: deleteUrl(req, token, 'm') }, 200, h);
 }
 
 async function deleteConfirm(url) {
   const t = url.searchParams.get('t') || '';
   if (!/^[0-9a-f-]{36}$/.test(t)) return page('Link greșit', `<h1>Link greșit</h1><p>Linkul de ștergere nu e complet. Copiază-l din nou sau scrie-ne.</p>${BACK}`, 400);
+  const what = url.searchParams.get('k') === 'm'
+    ? 'Îți ștergem mesajul și contactul de răspuns.'
+    : 'Îți scoatem numele, telefonul, emailul și răspunsurile de pe lista de așteptare. Nu te mai anunțăm la lansare.';
   return page('Șterge datele', `<h1>Ștergi datele tale?</h1>
-<p>Îți scoatem numele, telefonul, emailul și răspunsurile de pe lista de așteptare. Nu te mai anunțăm la lansare.</p>
+<p>${what}</p>
 <form method="post" action="/delete"><input type="hidden" name="t" value="${esc(t)}"><button type="submit">Da, șterge-le</button></form>`);
 }
 
@@ -107,10 +154,14 @@ async function deleteRow(req, env) {
     else t = clip((await req.formData()).get('t'));
   } catch { /* fall through to the bad-link page */ }
   if (!/^[0-9a-f-]{36}$/.test(t)) return page('Link greșit', `<h1>Link greșit</h1><p>Linkul de ștergere nu e complet.</p>${BACK}`, 400);
-  const r = await env.DB.prepare('DELETE FROM signups WHERE del_hash = ?').bind(await sha256(t)).run();
-  const n = (r.meta && r.meta.changes) || 0;
-  return n
-    ? page('Date șterse', `<h1>Gata, am șters datele tale.</h1><p>Nu mai ești pe lista de așteptare.</p>${BACK}`)
+  const hash = await sha256(t);
+  const [a, b] = await env.DB.batch([
+    env.DB.prepare('DELETE FROM signups WHERE del_hash = ?').bind(hash),
+    env.DB.prepare('DELETE FROM messages WHERE del_hash = ?').bind(hash),
+  ]);
+  const ns = (a.meta && a.meta.changes) || 0, nm = (b.meta && b.meta.changes) || 0;
+  return ns || nm
+    ? page('Date șterse', `<h1>Gata, am șters datele tale.</h1><p>${ns ? 'Nu mai ești pe lista de așteptare.' : 'Mesajul tău nu mai există la noi.'}</p>${BACK}`)
     : page('Nimic de șters', `<h1>Nu mai avem date pentru acest link.</h1><p>Au fost deja șterse.</p>${BACK}`);
 }
 
@@ -120,14 +171,18 @@ export default {
     const url = new URL(req.url);
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: h });
     if (req.method === 'POST' && url.pathname === '/signup') return signup(req, env, h);
+    if (req.method === 'POST' && url.pathname === '/message') return message(req, env, h);
     if (req.method === 'GET' && url.pathname === '/delete') return deleteConfirm(url);
     if (req.method === 'POST' && url.pathname === '/delete') return deleteRow(req, env);
     return json({ error: 'not found' }, 404, h);
   },
 
-  // Retention: nothing is kept longer than 12 months after signup.
+  // Retention: nothing is kept longer than 12 months.
   async scheduled(event, env) {
-    const r = await env.DB.prepare(`DELETE FROM signups WHERE created_at < datetime('now', ?)`).bind(RETENTION).run();
-    console.log(JSON.stringify({ retention: RETENTION, deleted: (r.meta && r.meta.changes) || 0 }));
+    const [a, b] = await env.DB.batch([
+      env.DB.prepare(`DELETE FROM signups WHERE created_at < datetime('now', ?)`).bind(RETENTION),
+      env.DB.prepare(`DELETE FROM messages WHERE created_at < datetime('now', ?)`).bind(RETENTION),
+    ]);
+    console.log(JSON.stringify({ retention: RETENTION, signups: (a.meta && a.meta.changes) || 0, messages: (b.meta && b.meta.changes) || 0 }));
   },
 };
